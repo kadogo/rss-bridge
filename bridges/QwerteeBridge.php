@@ -17,7 +17,7 @@ class QwerteeBridge extends BridgeAbstract
             $item['uri']      = $element->find('img')->src;
             $item['title']    = $element->find('.title > span')->innertext;
             $item['author']   = $element->find('.title > a')->innertext;
-            $item['content']  = $element->find('img');
+            $item['content']  = $element;
             $this->items[]    = $item;
 
             // Break if we have 3 elements because we doesn't want the last chance tees
