@@ -15,8 +15,8 @@ class QwerteeBridge extends BridgeAbstract
         foreach ($html->find('.index-tee') as $element) {
             $item = [];
             $item['uri']      = $element->find('img', 0)->src;
-            $item['title']    = $element->find('.title > span', 0)->innertext;
-            $item['author']   = $element->find('.title > a', 0)->innertext;
+            $item['title']    = $element->find('.title span', 0)->innertext;
+            $item['author']   = $element->find('.title a', 0)->innertext;
             $item['content']  = $element->find('img', 0);
             $this->items[]    = $item;
 
