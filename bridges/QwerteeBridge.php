@@ -11,7 +11,6 @@ class QwerteeBridge extends BridgeAbstract
     public function collectData()
     {
         $html = getSimpleHTMLDOM(self::URI);
-        $count = 0
 
         foreach ($content->find('.big-slides .index-tee') as $element) {
             $item = [];
