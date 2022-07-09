@@ -12,7 +12,7 @@ class QwerteeBridge extends BridgeAbstract
     {
         $html = getSimpleHTMLDOM(self::URI);
 
-        foreach ($content->find('.big-slides .index-tee') as $element) {
+        foreach ($html->find('.big-slides .index-tee') as $element) {
             $item = [];
             $item['uri']      = $element->find('img')->src;
             $item['title']    = $element->find('.title > span')->innertext;
