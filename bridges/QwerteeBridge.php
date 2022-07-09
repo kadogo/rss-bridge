@@ -22,7 +22,7 @@ class QwerteeBridge extends BridgeAbstract
 
             // Break if we have 3 elements because we doesn't want the last chance tees
             if (count($this->items) == 3) {
-              break;
+                break;
             }
         }
     }
