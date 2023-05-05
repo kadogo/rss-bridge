@@ -88,21 +88,22 @@ class UnogsBridge extends BridgeAbstract
         return $feedName;
     }
 
-    private function getJSON($url)
+    private function getJSON($url, $access_token)
     {
         $header = [
             'Referer: https://unogs.com/',
-            'referrer: http://unogs.com'
+            'referrer: http://unogs.com',
+            'Authorization: Bearer ' . $access_token
         ];
 
         $raw = getContents($url, $header);
         return json_decode($raw, true);
     }
 
-    private function getImage($nfid)
+    private function getImage($nfid, $access_token)
     {
         $url = self::URI . '/api/title/bgimages?netflixid=' . $nfid;
-        $json = $this->getJSON($url);
+        $json = $this->getJSON($url, $access_token);
         $image_wrapper = '';
         if (isset($json['bo1280x448'])) {
             $image_wrapper = 'bo1280x448';
@@ -115,14 +116,14 @@ class UnogsBridge extends BridgeAbstract
         return $image_link;
     }
 
-    private function handleData($data)
+    private function handleData($data, $access_token)
     {
         $item = [];
         $item['title'] = $data['title'] . ' - ' . $data['year'];
         $item['timestamp'] = $data['titledate'];
         $netflix_id = $data['nfid'];
         $item['uri'] = 'https://www.netflix.com/title/' . $netflix_id;
-        $image_url = $this->getImage($netflix_id);
+        $image_url = $this->getImage($netflix_id, $access_token);
         $netflix_synopsis = $data['synopsis'];
         $expired_warning = '';
         if (isset($data['expires'])) {
@@ -142,6 +143,15 @@ EOD;
 
     public function collectData()
     {
+      
+      $a = getContents('https://unogs.com/api/user', [], [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => "user_name=" . time() / 1000,
+        CURLOPT_RETURNTRANSFER => true,
+      ]);
+      
+      $access_token = json_decode($a, true)["token"]["access_token"];
+      //~ file_put_contents('/tmp/log', self::ACCESS_TOKEN);
         $feed = $this->getInput('feed');
         $is_global = false;
         $country_code = '';
@@ -163,7 +173,7 @@ EOD;
             $limit
         );
 
-        $json_data = $this->getJSON($api_url);
+        $json_data = $this->getJSON($api_url, $access_token);
         $movies = $json_data['results'];
 
         if ($this->getInput('feed') == 'expiring') {
@@ -176,7 +186,7 @@ EOD;
         }
 
         foreach ($movies as $movie) {
-            $this->handleData($movie);
+            $this->handleData($movie, $access_token);
         }
     }
 }
