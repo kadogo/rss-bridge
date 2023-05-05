@@ -2,7 +2,7 @@
 
 /* Generate the "Contributors" list for README.md automatically utilizing the GitHub API */
 
-require __DIR__ . '/../../lib/rssbridge.php';
+require __DIR__ . '/../../lib/bootstrap.php';
 
 $url = 'https://api.github.com/repos/rss-bridge/rss-bridge/contributors';
 $contributors = [];
@@ -10,9 +10,9 @@ $next = true;
 
 while ($next) { /* Collect all contributors */
     $headers = [
-        'Accept: application/json',
-        'Content-Type: application/json',
-        'User-Agent: RSS-Bridge'
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'User-Agent' => 'RSS-Bridge',
     ];
     $result = _http_request($url, ['headers' => $headers]);
 

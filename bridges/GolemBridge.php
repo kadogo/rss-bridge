@@ -69,7 +69,15 @@ class GolemBridge extends FeedExpander
         $item['content'] ??= '';
         $uri = $item['uri'];
 
+        $urls = [];
+
         while ($uri) {
+            if (isset($urls[$uri])) {
+                // Prevent forever a loop
+                break;
+            }
+            $urls[$uri] = true;
+
             $articlePage = getSimpleHTMLDOMCached($uri, static::CACHE_TIMEOUT, static::HEADERS);
 
             // URI without RSS feed reference
@@ -77,7 +85,7 @@ class GolemBridge extends FeedExpander
 
             $author = $articlePage->find('article header .authors .authors__name', 0);
             if ($author) {
-                $item['author'] = $author->innertext;
+                $item['author'] = $author->plaintext;
             }
 
             $item['content'] .= $this->extractContent($articlePage);

@@ -2,28 +2,33 @@
 
 class QwerteeBridge extends BridgeAbstract
 {
-    const MAINTAINER = 'kadogo';
-    const NAME = 'Qwertee Bridge';
-    const URI = 'https://www.qwertee.com/';
-    const CACHE_TIMEOUT = 86400; //24h
-    const DESCRIPTION = 'Returns latest tee from Qwertee.';
+    const NAME = 'Qwertee';
+    const URI = 'https://www.qwertee.com';
+    const DESCRIPTION = 'Returns the daily designs';
+    const MAINTAINER = 'Bockiii';
+    const PARAMETERS = [];
+
+    const CACHE_TIMEOUT = 60 * 60 * 3; // 3 hours
 
     public function collectData()
     {
         $html = getSimpleHTMLDOM(self::URI);
 
-        foreach ($html->find('.index-tee') as $element) {
+        foreach ($html->find('div.big-slides', 0)->find('div.big-slide') as $element) {
+            $title = $element->find('div.index-tee', 0)->getAttribute('data-name', 0);
+            $today = date('m/d/Y');
             $item = [];
-            $item['uri']      = $element->find('img', 0)->src;
-            $item['title']    = $element->find('.title span', 0)->innertext;
-            $item['author']   = $element->find('.title a', 0)->innertext;
-            $item['content']  = $element->find('img', 0);
-            $this->items[]    = $item;
+            $item['uri'] = self::URI;
+            $item['title'] = $title;
+            $item['uid'] = $title;
+            $item['timestamp'] = $today;
+            $item['content'] = '<a href="'
+            . $item['uri']
+            . '"><img src="'
+            . $element->find('img', 0)->getAttribute('src', 0)
+            . '" /></a>';
 
-            // Break if we have 3 elements because we doesn't want the last chance tees
-            if (count($this->items) == 3) {
-                break;
-            }
+            $this->items[] = $item;
         }
     }
 }

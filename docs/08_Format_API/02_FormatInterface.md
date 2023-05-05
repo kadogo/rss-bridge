@@ -1,4 +1,4 @@
-The `FormatInterface`interface defines functions that need to be implemented by all formats:
+The `FormatInterface` interface defines functions that need to be implemented by all formats:
 
 * [display](#the-display-function)
 * [stringify](#the-stringify-function)
@@ -82,7 +82,7 @@ getExtraInfos(): array
 The `getMimeType` function returns the expected [MIME type](https://en.wikipedia.org/wiki/Media_type#Common_examples) of the format's output.
 
 ```PHP
-getMimeType(): string
+parse_mime_type(): string
 ```
 
 # Template

@@ -1,20 +1,20 @@
 <?php
 
-/**
-* Cache with file system
-*/
 class FileCache implements CacheInterface
 {
-    protected $path;
+    private array $config;
+    protected $scope;
     protected $key;
 
-    public function __construct()
+    public function __construct(array $config = [])
     {
-        if (!is_writable(PATH_CACHE)) {
-            returnServerError(
-                'RSS-Bridge does not have write permissions for '
-                . PATH_CACHE . '!'
-            );
+        $this->config = $config;
+
+        if (!is_dir($this->config['path'])) {
+            throw new \Exception('The cache path does not exists. You probably want: mkdir cache && chown www-data:www-data cache');
+        }
+        if (!is_writable($this->config['path'])) {
+            throw new \Exception('The cache path is not writeable. You probably want: chown www-data:www-data cache');
         }
     }
 
@@ -23,20 +23,15 @@ class FileCache implements CacheInterface
         if (file_exists($this->getCacheFile())) {
             return unserialize(file_get_contents($this->getCacheFile()));
         }
-
         return null;
     }
 
     public function saveData($data)
     {
-        // Notice: We use plain serialize() here to reduce memory footprint on
-        // large input data.
         $writeStream = file_put_contents($this->getCacheFile(), serialize($data));
-
         if ($writeStream === false) {
-            throw new \Exception('Cannot write the cache... Do you have the right permissions ?');
+            throw new \Exception('The cache path is not writeable. You probably want: chown www-data:www-data cache');
         }
-
         return $this;
     }
 
@@ -46,7 +41,10 @@ class FileCache implements CacheInterface
         clearstatcache(false, $cacheFile);
         if (file_exists($cacheFile)) {
             $time = filemtime($cacheFile);
-            return ($time !== false) ? $time : null;
+            if ($time !== false) {
+                return $time;
+            }
+            return null;
         }
 
         return null;
@@ -54,49 +52,44 @@ class FileCache implements CacheInterface
 
     public function purgeCache($seconds)
     {
-        $cachePath = $this->getPath();
-        if (file_exists($cachePath)) {
-            $cacheIterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($cachePath),
-                RecursiveIteratorIterator::CHILD_FIRST
-            );
+        if (! $this->config['enable_purge']) {
+            return;
+        }
 
-            foreach ($cacheIterator as $cacheFile) {
-                if (in_array($cacheFile->getBasename(), ['.', '..', '.gitkeep'])) {
-                    continue;
-                } elseif ($cacheFile->isFile()) {
-                    if (filemtime($cacheFile->getPathname()) < time() - $seconds) {
-                        unlink($cacheFile->getPathname());
-                    }
+        $cachePath = $this->getScope();
+        if (!file_exists($cachePath)) {
+            return;
+        }
+        $cacheIterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($cachePath),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($cacheIterator as $cacheFile) {
+            if (in_array($cacheFile->getBasename(), ['.', '..', '.gitkeep'])) {
+                continue;
+            } elseif ($cacheFile->isFile()) {
+                if (filemtime($cacheFile->getPathname()) < time() - $seconds) {
+                    // todo: sometimes this file doesn't exists
+                    unlink($cacheFile->getPathname());
                 }
             }
         }
     }
 
-    /**
-    * Set scope
-    * @return self
-    */
     public function setScope($scope)
     {
-        if (is_null($scope) || !is_string($scope)) {
+        if (!is_string($scope)) {
             throw new \Exception('The given scope is invalid!');
         }
 
-        $this->path = PATH_CACHE . trim($scope, " \t\n\r\0\x0B\\\/") . '/';
+        $this->scope = $this->config['path'] . trim($scope, " \t\n\r\0\x0B\\\/") . '/';
 
         return $this;
     }
 
-    /**
-    * Set key
-    * @return self
-    */
     public function setKey($key)
     {
-        if (!empty($key) && is_array($key)) {
-            $key = array_map('strtolower', $key);
-        }
         $key = json_encode($key);
 
         if (!is_string($key)) {
@@ -107,38 +100,26 @@ class FileCache implements CacheInterface
         return $this;
     }
 
-    /**
-    * Return cache path (and create if not exist)
-    * @return string Cache path
-    */
-    private function getPath()
+    private function getScope()
     {
-        if (is_null($this->path)) {
+        if (is_null($this->scope)) {
             throw new \Exception('Call "setScope" first!');
         }
 
-        if (!is_dir($this->path)) {
-            if (mkdir($this->path, 0755, true) !== true) {
-                throw new \Exception('Unable to create ' . $this->path);
+        if (!is_dir($this->scope)) {
+            if (mkdir($this->scope, 0755, true) !== true) {
+                throw new \Exception('mkdir: Unable to create file cache folder');
             }
         }
 
-        return $this->path;
+        return $this->scope;
     }
 
-    /**
-    * Get the file name use for cache store
-    * @return string Path to the file cache
-    */
     private function getCacheFile()
     {
-        return $this->getPath() . $this->getCacheName();
+        return $this->getScope() . $this->getCacheName();
     }
 
-    /**
-    * Determines file name for store the cache
-    * return string
-    */
     private function getCacheName()
     {
         if (is_null($this->key)) {
