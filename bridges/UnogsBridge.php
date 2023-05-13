@@ -110,6 +110,9 @@ class UnogsBridge extends BridgeAbstract
         } else {
             $image_wrapper = 'bo665x375';
         }
+        if($json[$image_wrapper] == null) {
+          return;
+        }
         end($json[$image_wrapper]);
         $position = key($json[$image_wrapper]);
         $image_link = $json[$image_wrapper][$position]['url'];
@@ -144,14 +147,14 @@ EOD;
     public function collectData()
     {
       
-      $a = getContents('https://unogs.com/api/user', [], [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => "user_name=" . time() / 1000,
-        CURLOPT_RETURNTRANSFER => true,
-      ]);
-      
-      $access_token = json_decode($a, true)["token"]["access_token"];
-      //~ file_put_contents('/tmp/log', self::ACCESS_TOKEN);
+        $user = getContents('https://unogs.com/api/user', [], [
+          CURLOPT_POST => true,
+          CURLOPT_POSTFIELDS => "user_name=" . time() / 1000,
+          CURLOPT_RETURNTRANSFER => true,
+        ]);
+        
+        $access_token = json_decode($user, true)["token"]["access_token"];
+
         $feed = $this->getInput('feed');
         $is_global = false;
         $country_code = '';
